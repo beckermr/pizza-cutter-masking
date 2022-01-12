@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+
+def main(hyperleda_file, foreground_file, output_file):
+    import pizza_cutter_masking as pcm
+
+    if hyperleda_file is None and foreground_file is None:
+        raise RuntimeError('no files were specified!')
+
+    geom = []
+    if hyperleda_file is not None:
+        print('loading hyperleda from:', hyperleda_file)
+        geom += pcm.hyperleda.make_hyperleda_geom(hyperleda_file)
+    if foreground_file is not None:
+        print('loading foreground from:', foreground_file)
+        geom += pcm.foreground.make_foreground_geom(foreground_file)
+
+    hmap = pcm.maps.geom_to_map(geom)
+    print('writing:', output_file)
+    hmap.write(output_file, clobber=True)
+
+
+def get_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--hyperleda',  help='hyperleda file')
+    parser.add_argument('--foreground',  help='foreground file')
+    parser.add_argument('--output',  help='output file')
+
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = get_args()
+    main(
+        hyperleda_file=args.hyperleda,
+        foreground_file=args.foreground,
+        output_file=args.output,
+    )

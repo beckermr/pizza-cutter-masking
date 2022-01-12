@@ -1,0 +1,10 @@
+NSIDE_COVERAGE = 32
+NSIDE = 16384
+
+FOOTPRINT_VAL = 2**0
+
+# last bit in the foreground map is 2**6
+LMC_VAL = 2**7
+HYPERLEDA_VAL = 2**9
+
+HYPERLEDA_RADIUS_FAC = 4
