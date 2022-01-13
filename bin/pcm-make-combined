@@ -36,7 +36,7 @@ def main(footprint_file, mask_file, metadetect_file, output_file):
 
         pixels = np.arange(start, end)
 
-        ra, dec = hp.pix2ang(NSIDE, pixels)
+        ra, dec = hp.pix2ang(NSIDE, pixels, lonlat=True)
 
         keep = pcm.apply_masks.apply_masks(
             ra=ra, dec=dec,
