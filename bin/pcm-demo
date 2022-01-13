@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+
+
+def main(npts, ra, dec, radius, footprint_file, mask_file, metadetect_file):
+    import pizza_cutter_masking as pcm
+    import healsparse as hsp
+    import esutil as eu
+    import skyproj
+    import matplotlib.pyplot as mplt
+
+    if not any((footprint_file, mask_file, metadetect_file)):
+        raise RuntimeError('send at least one footprint or mask')
+
+    if footprint_file is not None:
+        footprint = hsp.HealSparseMap.read(footprint_file)
+    else:
+        footprint = None
+
+    if mask_file is not None:
+        mask = hsp.HealSparseMap.read(mask_file)
+    else:
+        mask = None
+
+    if metadetect_file is not None:
+        metadetect = hsp.HealSparseMap.read(metadetect_file)
+    else:
+        metadetect = None
+
+    ravals, decvals = eu.coords.randcap(npts, ra, dec, radius)
+
+    keep = pcm.apply_masks.apply_masks(
+        ra=ravals, dec=decvals,
+        footprint=footprint, mask=mask, metadetect=metadetect,
+    )
+
+    proj = skyproj.McBrydeSkyproj()
+    ms = 1
+    proj.scatter(ravals, decvals, c='red', marker='.', s=ms)
+    proj.scatter(ravals[keep], decvals[keep], c='blue', marker='.', s=ms)
+    mplt.show()
+
+
+def get_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--footprint', help='footprint file')
+    parser.add_argument('--mask', help='mask file')
+    parser.add_argument('--metadetect', help='metadetect footprint file')
+
+    parser.add_argument('--ra', type=float, default=30,
+                        help='ra center for points')
+    parser.add_argument('--dec', type=float, default=-30,
+                        help='dec center for points')
+    parser.add_argument('--radius', type=float, default=70,
+                        help='radius for spherical cap')
+    parser.add_argument('--npts', type=int, default=100000,
+                        help='number of points')
+
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = get_args()
+    main(
+        npts=args.npts,
+        ra=args.ra,
+        dec=args.dec,
+        radius=args.radius,
+        footprint_file=args.footprint,
+        mask_file=args.mask,
+        metadetect_file=args.metadetect,
+    )
