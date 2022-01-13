@@ -76,8 +76,8 @@ def convert_hyperleda_to_fits():
     import numpy as np
     import fitsio
 
-    infile = 'hyperLeda_B16_18.csv'
-    outfile = 'hyperLeda_B16_18.fits.gz'
+    infile = 'hyperleda_B16_18.csv'
+    outfile = 'hyperleda_B16_18.fits.gz'
 
     data = []
     namelen = -1
@@ -161,48 +161,3 @@ def fit_hyperleda_radius_relation():
     ax.plot(xvals, yvals)
 
     mplt.savefig('fit-hleda-radius.pdf')
-
-
-# def make_hyperleda_map(
-#     fname,
-#     output,
-# ):
-#     """
-#     make and write a healsparse map for hyperleda, trimming to the DES area
-#
-#     Parameters
-#     ----------
-#     fname: str
-#         Path to the catalog
-#     output: str
-#         Output file path
-#     """
-#     circles = make_hyperleda_geom(fname)
-#     hmap = geom_to_map(circles)
-#     print('writing:', output)
-#     hmap.write(output, clobber=True)
-#
-#
-# def _read_hyperleda_catalog(fname):
-#     import numpy as np
-#     import fitsio
-#     import esutil as eu
-#
-#     data = fitsio.read(fname, lower=True)
-#
-#     # logd25 is log(radius/0.1 arcmin)
-#
-#     w, = np.where(np.isfinite(data['logd25']))
-#     data = data[w]
-#
-#     diameter_arcmin = 0.1 * 10**data['logd25']
-#     # diameter_arcmin = 0.1 * np.exp(data['logd25'])
-#
-#     radius_degrees = (diameter_arcmin / 2) / 60
-#
-#     dt = [('radius_degrees', 'f8')]
-#     output = eu.numpy_util.add_fields(data, dt)
-#
-#     output['radius_degrees'] = radius_degrees
-#
-#     return output
