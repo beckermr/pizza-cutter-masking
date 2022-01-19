@@ -29,16 +29,20 @@ def apply_masks(ra, dec, footprint=None, mask=None, metadetect=None):
         raise RuntimeError('send at least one footprint or mask')
 
     if footprint is not None:
-        footprint_vals = footprint.get_values_pos(ra, dec, lonlat=True)
-        logic &= (footprint_vals == 1)
+        footprint_ok = footprint.get_values_pos(
+            ra, dec, lonlat=True, valid_mask=True,
+        )
+        logic &= footprint_ok
 
     if mask is not None:
         mask_vals = mask.get_values_pos(ra, dec, lonlat=True)
         logic &= (mask_vals == 0)
 
     if metadetect is not None:
-        mdet_vals = metadetect.get_values_pos(ra, dec, lonlat=True)
-        logic &= (mdet_vals == 1)
+        mdet_ok = metadetect.get_values_pos(
+            ra, dec, lonlat=True, valid_mask=True,
+        )
+        logic &= mdet_ok
 
     keep, = np.where(logic)
     return keep
