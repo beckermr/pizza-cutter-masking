@@ -3,13 +3,13 @@
 
 def main(footprint_file, mask_file, metadetect_file, output_file):
     import numpy as np
-    import pizza_cutter_masking as pcm
     from pizza_cutter_masking.constants import NSIDE, NSIDE_COVERAGE
     import healsparse as hsp
-    import healpy as hp
-    from tqdm import trange
+    from tqdm import tqdm
 
+    print('loading:', footprint_file)
     footprint = hsp.HealSparseMap.read(footprint_file)
+    print('loading:', mask_file)
     mask = hsp.HealSparseMap.read(mask_file)
 
     if metadetect_file is not None:
@@ -21,28 +21,20 @@ def main(footprint_file, mask_file, metadetect_file, output_file):
         NSIDE_COVERAGE, NSIDE, dtype=np.int16,
     )
 
-    # work in chunks to reduce memory usage
-    npix = hp.nside2npix(pcm.constants.NSIDE)
-    chunksize = 1_000_000
-    nchunks = npix // chunksize
-    if npix % chunksize != 0:
-        nchunks += 1
+    # loop over the coverage pixel sub-maps, upgrade and get the valid pixels
+    # within that range.
+    for covpix_map in tqdm(footprint.get_covpix_maps()):
+        covpix_highres = covpix_map.upgrade(NSIDE)
+        valid_pix = covpix_highres.valid_pixels
 
-    for ipix in trange(nchunks):
-        start = ipix * chunksize
-        end = (ipix+1) * chunksize
-        if end > npix:
-            end = npix
+        mask_vals = mask.get_values_pix(valid_pix)
+        keep = (mask_vals == 0)
 
-        pixels = np.arange(start, end)
+        if metadetect is not None:
+            mdet_ok = metadetect.get_values_pix(valid_pix, valid_mask=True)
+            keep &= mdet_ok
 
-        ra, dec = hp.pix2ang(NSIDE, pixels, lonlat=True, nest=True)
-
-        keep = pcm.apply_masks.apply_masks(
-            ra=ra, dec=dec,
-            footprint=footprint, mask=mask, metadetect=metadetect,
-        )
-        hsp_map[pixels[keep]] = 1
+        hsp_map[valid_pix[keep]] = 1
 
     print('writing:', output_file)
     hsp_map.write(output_file, clobber=True)
