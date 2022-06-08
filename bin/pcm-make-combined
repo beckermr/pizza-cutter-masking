@@ -7,12 +7,13 @@ def main(footprint_file, mask_file, metadetect_file, output_file):
     import healsparse as hsp
     from tqdm import tqdm
 
-    print('loading:', footprint_file)
+    print('loading footprint:', footprint_file)
     footprint = hsp.HealSparseMap.read(footprint_file)
-    print('loading:', mask_file)
+    print('loading mask:', mask_file)
     mask = hsp.HealSparseMap.read(mask_file)
 
     if metadetect_file is not None:
+        print('loading mdet mask:', metadetect_file)
         metadetect = hsp.HealSparseMap.read(metadetect_file)
     else:
         metadetect = None
