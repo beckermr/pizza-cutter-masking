@@ -1,6 +1,7 @@
 from .constants import (
     HYPERLEDA_VAL,
-    # HYPERLEDA_RADIUS_FAC,
+    HYPERLEDA_MINRAD_ARCSEC,
+    HYPERLEDA_RADIUS_FAC,
 )
 # from .maps import geom_to_map
 
@@ -25,14 +26,16 @@ def make_hyperleda_geom(fname):
     from esutil.numpy_util import between
     import fitsio
 
-    print('reading hyperleda:', fname)
     data = fitsio.read(fname, lower=True)
+    minrad_degrees = HYPERLEDA_MINRAD_ARCSEC / 3600
 
     circles = []
     for objdata in tqdm(data):
         bmag = objdata['bt']
         ra = objdata['ra']
         dec = objdata['dec']
+        # ra = objdata['raj2000']
+        # dec = objdata['dej2000']
 
         # keep a superset of the DES area
         if between(dec, -75, 10) and (
@@ -40,13 +43,16 @@ def make_hyperleda_geom(fname):
             between(ra, 295, 360)
         ):
 
-            radius = get_hyperleda_radius(bmag)
-            if radius > 0:
+            radius_degrees = get_hyperleda_radius(bmag) * HYPERLEDA_RADIUS_FAC
+            if radius_degrees < minrad_degrees:
+                radius_degrees = minrad_degrees
+
+            if radius_degrees > 0:
 
                 circle = healsparse.geom.Circle(
                     ra=ra,
                     dec=dec,
-                    radius=radius,
+                    radius=radius_degrees,
                     value=HYPERLEDA_VAL,
                 )
                 circles.append(circle)

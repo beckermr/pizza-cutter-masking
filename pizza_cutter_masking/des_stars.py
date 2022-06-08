@@ -1,10 +1,9 @@
-from .constants import FOREGROUND_MINRAD_ARCSEC, FOREGROUND_RADIUS_FAC
+from .constants import DES_STARS_RADIUS_ARCSEC, DES_STARS_VAL
 
 
-def make_foreground_geom(fname):
+def make_des_stars_geom(fname):
     """
-    make a healsparse geometry primitives for the foreground objects (type
-    Circle)
+    make a healsparse geometry primitives for des stars
 
     Parameters
     ----------
@@ -16,26 +15,25 @@ def make_foreground_geom(fname):
     list of geometry primitives, in this case all are Circles
     """
 
+    import numpy as np
     import fitsio
     import healsparse
     from tqdm import tqdm
 
     data = fitsio.read(fname, lower=True)
+    w, = np.where(data['mash'] == 0)
+    data = data[w]
 
-    minrad_degrees = FOREGROUND_MINRAD_ARCSEC / 3600
+    radius_degrees = DES_STARS_RADIUS_ARCSEC / 3600
 
     circles = []
     for objdata in tqdm(data):
-        radius_degrees = objdata['rad_avoid'] * FOREGROUND_RADIUS_FAC
-        if radius_degrees < minrad_degrees:
-            radius_degrees = minrad_degrees
 
         circle = healsparse.geom.Circle(
             ra=objdata['ra'],
             dec=objdata['dec'],
             radius=radius_degrees,
-            # the value is stored as float in the table/file
-            value=int(objdata['mask_bit']),
+            value=DES_STARS_VAL,
         )
         circles.append(circle)
 
