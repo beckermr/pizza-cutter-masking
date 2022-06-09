@@ -1,0 +1,19 @@
+foreground-v2.fits
+    came from a db query.  See scripts/foreground.sql
+
+gaia.fits
+    This is from the DES gaia DR2 table, limited to the footprint
+    See scripts/gaia.sql
+
+gold_2_0_r_lt_21_summary.fit
+    Get query from Eli
+
+hyperleda
+    original file from querying the hyperleda website, converted with
+    scripts/convert_hleda.py
+
+healsparse map is generated from individual maps created
+when running metadetect
+
+    dir=/gpfs02/astro/workarea/beckermr/des-y6-analysis/2022_04_21_run_mdet_final_v2/data_final_nogcut
+    pcm-make-mdet-mask --flist $(find $dir -name "*.hs") --output mdet-16384-v2.fits
