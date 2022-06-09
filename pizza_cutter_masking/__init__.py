@@ -8,5 +8,4 @@ from . import gaia
 from . import des_stars
 from . import footprint
 from . import maps
-from . import apply_masks
 from . import constants
