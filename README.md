@@ -1,8 +1,8 @@
 # pizza-cutter-masking
 mask making codes for pizza-cutter
 
-Examples
---------
+Examples making masks
+---------------------
 ```bash
 # make the foregound/gaia/des stars/hyperleda mask
 pcm-make-mask \
@@ -32,4 +32,17 @@ pcm-make-combined \
 
 # visualize the map
 pcm-plot-mask y6-combined-hleda-gaiafull-des-stars-hsmap16384-nomdet-v2.fits
+```
+
+Examples applying masks
+```python
+import healsparse as hsp
+
+hmap = hsp.HealSparseMap.read('y6-combined-hleda-gaiafull-des-stars-hsmap16384-mdet-v2.fits')
+
+ok = metadetect.get_values_pos(ra, dec, lonlat=True, valid_mask=True)
+fig, ax = mplt.subplots()
+ax.scatter(ra, dec, c='black')
+ax.scatter(ra[ok], dec[ok], c='red')
+mplt.show()
 ```
