@@ -17,3 +17,8 @@ when running metadetect
 
     dir=/gpfs02/astro/workarea/beckermr/des-y6-analysis/2022_04_21_run_mdet_final_v2/data_final_nogcut
     pcm-make-mdet-mask --flist $(find $dir -name "*.hs") --output mdet-16384-v2.fits
+
+footprint.fits.gz
+    This was a table dump, and I converted to healsparse
+    We could update this to the official one here
+    https://cdcvs.fnal.gov/redmine/projects/des-y6/wiki/Y6A2_Gold_footprint
