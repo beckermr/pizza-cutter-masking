@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+
+def main(footprint_file, mask_file, metadetect_file, output_file):
+    import numpy as np
+    from pizza_cutter_masking.constants import NSIDE, NSIDE_COVERAGE
+    import healsparse as hsp
+    from tqdm import tqdm
+
+    print('loading footprint:', footprint_file)
+    footprint = hsp.HealSparseMap.read(footprint_file)
+    print('loading mask:', mask_file)
+    mask = hsp.HealSparseMap.read(mask_file)
+
+    if metadetect_file is not None:
+        print('loading mdet mask:', metadetect_file)
+        metadetect = hsp.HealSparseMap.read(metadetect_file)
+    else:
+        metadetect = None
+
+    hsp_map = hsp.HealSparseMap.make_empty(
+        NSIDE_COVERAGE, NSIDE, dtype=np.int16,
+    )
+
+    # loop over the coverage pixel sub-maps, upgrade and get the valid pixels
+    # within that range.
+    for covpix_map in tqdm(footprint.get_covpix_maps()):
+        covpix_highres = covpix_map.upgrade(NSIDE)
+        valid_pix = covpix_highres.valid_pixels
+
+        mask_vals = mask.get_values_pix(valid_pix)
+        keep = (mask_vals == 0)
+
+        if metadetect is not None:
+            mdet_ok = metadetect.get_values_pix(valid_pix, valid_mask=True)
+            keep &= mdet_ok
+
+        hsp_map[valid_pix[keep]] = 1
+
+    print('writing:', output_file)
+    hsp_map.write(output_file, clobber=True)
+
+
+def get_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--footprint', required=True, help='footprint file')
+    parser.add_argument('--mask', required=True, help='mask file')
+    parser.add_argument('--metadetect', help='metadetect footprint file')
+    parser.add_argument('--output', required=True, help='output file')
+
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = get_args()
+
+    main(
+        footprint_file=args.footprint,
+        mask_file=args.mask,
+        metadetect_file=args.metadetect,
+        output_file=args.output,
+    )
