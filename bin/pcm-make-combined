@@ -3,6 +3,7 @@
 
 def main(footprint_file, mask_file, metadetect_file, output_file):
     import numpy as np
+    import pizza_cutter_masking as pcm
     from pizza_cutter_masking.constants import NSIDE, NSIDE_COVERAGE
     import healsparse as hsp
     from tqdm import tqdm
@@ -36,6 +37,9 @@ def main(footprint_file, mask_file, metadetect_file, output_file):
             keep &= mdet_ok
 
         hsp_map[valid_pix[keep]] = 1
+
+    print('masking the LMC')
+    pcm.lmc.mask_lmc(hsp_map)
 
     print('writing:', output_file)
     hsp_map.write(output_file, clobber=True)

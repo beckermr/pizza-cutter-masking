@@ -36,3 +36,7 @@ FOREGROUND_MINRAD_ARCSEC = 5
 
 # DES Stars
 DES_STARS_RADIUS_ARCSEC = 5
+
+LMC_RA_RANGE = (60, 100)
+LMC_DEC_RANGE = (-70, -58)
+# (ra > 60) and (ra < 100) and (dec > -70) and (dec < -58)
