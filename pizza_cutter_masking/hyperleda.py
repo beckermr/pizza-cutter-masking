@@ -39,8 +39,8 @@ def make_hyperleda_geom(fname):
 
         # keep a superset of the DES area
         if between(dec, -75, 10) and (
-            between(ra, 0, 120) or
-            between(ra, 295, 360)
+            between(ra, 0, 120)
+            or between(ra, 295, 360)
         ):
 
             radius_degrees = get_hyperleda_radius(bmag) * HYPERLEDA_RADIUS_FAC

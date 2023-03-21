@@ -3,6 +3,7 @@
 from .version import __version__
 
 from . import hyperleda
+from . import lmc
 from . import foreground
 from . import gaia
 from . import des_stars
