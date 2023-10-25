@@ -61,13 +61,12 @@ def main(args):
 
 def oplot_cat(ax, args):
     import numpy as np
-    import h5py
 
     print('loading:', args.cat)
-    hfile = h5py.File(args.cat)
-
-    ra = hfile['/mdet/noshear']['ra'][:]
-    dec = hfile['/mdet/noshear']['dec'][:]
+    if '.h5' in args.cat:
+        ra, dec = read_from_h5(args.cat)
+    else:
+        ra, dec = read_from_fits(args.cat)
 
     if args.lon_range is not None:
         w, = np.where(
@@ -80,7 +79,33 @@ def oplot_cat(ax, args):
         ra = ra[w]
         dec = dec[w]
 
-    ax.scatter(ra, dec, c='black', marker='o', s=4)
+    ax.scatter(ra, dec, c='black', marker='o', s=4, zorder=10)
+
+
+def read_from_h5(fname):
+    import h5py
+    hfile = h5py.File(args.cat)
+
+    ra = hfile['/mdet/noshear']['ra'][:]
+    dec = hfile['/mdet/noshear']['dec'][:]
+    return ra, dec
+
+
+def read_from_fits(fname):
+    import fitsio
+    import numpy as np
+
+    with fitsio.FITS(fname) as fits:
+        data = fits[1].read(columns=['mask_flags', 'mdet_step', 'mfrac'])
+        w, = np.where(
+            (data['mask_flags'] == 0)
+            & (data['mdet_step'] == 'noshear')
+            & (data['mfrac'] < 0.1)
+        )
+
+        data = fits[1].read(columns=['ra', 'dec'], rows=w)
+
+    return data['ra'], data['dec']
 
 
 def get_csv(values):
