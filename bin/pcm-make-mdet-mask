@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
 
-def main(flist, output_file):
+def main(flist, output_file, nside=None):
     import numpy as np
     from pizza_cutter_masking.constants import NSIDE, NSIDE_COVERAGE
     import healsparse as hsp
 
+    if nside is None:
+        nside = NSIDE
+
     hsp_map = hsp.HealSparseMap.make_empty(
-        NSIDE_COVERAGE, NSIDE, dtype=np.int16,
+        NSIDE_COVERAGE, nside, dtype=np.int16,
     )
 
     nfile = len(flist)
@@ -15,7 +18,10 @@ def main(flist, output_file):
         print(f'{i+1}/{nfile} {fname}')
 
         hsp_highres = hsp.HealSparseMap.read(fname)
-        hsp_lowres = hsp_highres.degrade(NSIDE)
+        if hsp_highres.nside_sparse > nside:
+            hsp_lowres = hsp_highres.degrade(nside)
+        else:
+            hsp_lowres = hsp_highres
 
         valid_pix = hsp_lowres.valid_pixels
         values = hsp_lowres.get_values_pix(valid_pix)
@@ -46,6 +52,11 @@ def get_args():
         help='output file',
         required=True,
     )
+    parser.add_argument(
+        '--nside',
+        type=int,
+        help='use specified nside',
+    )
 
     return parser.parse_args()
 
@@ -55,4 +66,5 @@ if __name__ == '__main__':
     main(
         flist=args.flist,
         output_file=args.output,
+        nside=args.nside,
     )
