@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-def main(flist, output_file, nside=None):
+def main(flist, output_file, nside):
     import numpy as np
     from pizza_cutter_masking.constants import NSIDE, NSIDE_COVERAGE
     import healsparse as hsp

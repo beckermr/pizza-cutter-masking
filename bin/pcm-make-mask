@@ -3,6 +3,7 @@
 
 def main(
     hyperleda_file, foreground_file, gaia_file, des_stars_file, output_file,
+    nside,
 ):
     import pizza_cutter_masking as pcm
 
@@ -27,7 +28,7 @@ def main(
         print('loading foreground from:', foreground_file)
         geom += pcm.foreground.make_foreground_geom(foreground_file)
 
-    hmap = pcm.maps.geom_to_map(geom)
+    hmap = pcm.maps.geom_to_map(geom_list=geom, nside=nside)
 
     print('writing:', output_file)
     hmap.write(output_file, clobber=True)
@@ -43,6 +44,8 @@ def get_args():
     parser.add_argument('--des-stars', help='des stars file')
     parser.add_argument('--output', help='output file')
 
+    parser.add_argument('--nside', type=int, help='nside for output')
+
     return parser.parse_args()
 
 
@@ -54,4 +57,5 @@ if __name__ == '__main__':
         gaia_file=args.gaia,
         des_stars_file=args.des_stars,
         output_file=args.output,
+        nside=args.nside,
     )

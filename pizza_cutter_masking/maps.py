@@ -3,7 +3,7 @@ from .constants import (
 )
 
 
-def geom_to_map(geom_list):
+def geom_to_map(geom_list, nside):
     """
     Create a healsparse map from the input list of geometry primitives
 
@@ -20,9 +20,12 @@ def geom_to_map(geom_list):
     import healsparse
     import numpy as np
 
+    if nside is None:
+        nside = NSIDE
+
     hmap = healsparse.HealSparseMap.make_empty(
         nside_coverage=NSIDE_COVERAGE,
-        nside_sparse=NSIDE,
+        nside_sparse=nside,
         dtype=np.int16,
         sentinel=0,
     )
