@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+
+
+def main(flist, output_file, nside, tmpdir, nocleanup):
+    import os
+    import tempfile
+    from pizza_cutter_masking.constants import NSIDE
+
+    if nside is None:
+        nside = NSIDE
+
+    if not os.path.exists(tmpdir):
+        os.makedirs(tmpdir)
+
+    if nocleanup:
+        # leave the temp files in place after exiting
+        go(flist=flist, tmpdir=tmpdir, output_file=output_file)
+    else:
+        # create a subdir that will automatically get cleaned up
+        # after exiting
+        with tempfile.TemporaryDirectory(dir=tmpdir) as _tmpdir:
+            go(flist=flist, tmpdir=_tmpdir, output_file=output_file)
+
+
+def go(flist, tmpdir, output_file):
+    import healsparse as hsp
+    tmp_flist = write_tmpfiles(flist=flist, tmpdir=tmpdir)
+
+    print('writing:', output_file)
+    hsp.cat_healsparse_files(
+        tmp_flist,
+        output_file,
+        in_memory=True,
+        clobber=True,
+    )
+
+
+def write_tmpfiles(flist, tmpdir):
+    import os
+    import healsparse as hsp
+
+    nfile = len(flist)
+
+    tmp_flist = []
+    for i, fname in enumerate(flist):
+        print(f'{i+1}/{nfile} {fname}')
+        m = hsp.HealSparseMap.read(fname)
+
+        m2 = hsp.HealSparseMap.make_empty_like(m, dtype=bool, sentinel=False)
+        vpix = m.valid_pixels
+
+        m2[vpix[m[vpix] == 1]] = True
+
+        ofile = os.path.join(
+            tmpdir,
+            f"{os.path.basename(fname)}.booltemp"
+        )
+        print('writing:', ofile)
+        m2.write(ofile)
+        tmp_flist.append(ofile)
+
+    return tmp_flist
+
+
+def get_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--flist', nargs='+',
+        help='list of healsparse files for each tile',
+        required=True,
+    )
+    parser.add_argument(
+        '--output',
+        help='output file',
+        required=True,
+    )
+    parser.add_argument(
+        '--tmpdir',
+        help='place to put temporary files',
+        required=True,
+    )
+    parser.add_argument(
+        '--nocleanup',
+        help='do not clean up temporary files',
+        action='store_true',
+    )
+
+    parser.add_argument(
+        '--nside',
+        type=int,
+        help='use specified nside',
+    )
+
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = get_args()
+    main(
+        flist=args.flist,
+        output_file=args.output,
+        tmpdir=args.tmpdir,
+        nside=args.nside,
+        nocleanup=args.nocleanup,
+    )
