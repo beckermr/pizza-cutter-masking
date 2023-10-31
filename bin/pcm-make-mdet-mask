@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-def main(flist, output_file, nside):
+def main(flist, output_file, nside, use_bool):
     import numpy as np
     from pizza_cutter_masking.constants import NSIDE, NSIDE_COVERAGE
     import healsparse as hsp
@@ -9,8 +9,15 @@ def main(flist, output_file, nside):
     if nside is None:
         nside = NSIDE
 
+    if use_bool:
+        dtype = bool
+        val = True
+    else:
+        dtype = np.int16
+        val = 1
+
     hsp_map = hsp.HealSparseMap.make_empty(
-        NSIDE_COVERAGE, nside, dtype=np.int16,
+        NSIDE_COVERAGE, nside, dtype=dtype,
     )
 
     nfile = len(flist)
@@ -32,7 +39,7 @@ def main(flist, output_file, nside):
 
         # we can set directly to one because the individual
         # files have unique valid pixels
-        hsp_map[valid_pix[ok]] = 1
+        hsp_map[valid_pix[ok]] = val
 
     print('writing:', output_file)
     hsp_map.write(output_file, clobber=True)
@@ -58,6 +65,12 @@ def get_args():
         help='use specified nside',
     )
 
+    parser.add_argument(
+        '--use-bool',
+        action='store_true',
+        help='make a bool map rather than int16',
+    )
+
     return parser.parse_args()
 
 
@@ -67,4 +80,5 @@ if __name__ == '__main__':
         flist=args.flist,
         output_file=args.output,
         nside=args.nside,
+        use_bool=args.use_bool,
     )
