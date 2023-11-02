@@ -19,6 +19,7 @@ def geom_to_map(geom_list, nside):
     """
     import healsparse
     import numpy as np
+    from tqdm import tqdm
 
     if nside is None:
         nside = NSIDE
@@ -29,5 +30,9 @@ def geom_to_map(geom_list, nside):
         dtype=np.int16,
         sentinel=0,
     )
-    healsparse.realize_geom(geom_list, hmap)
+
+    for g in tqdm(geom_list):
+        pixels = g.get_pixels(nside=nside)
+        hmap[pixels] |= g.value
+
     return hmap
