@@ -3,7 +3,7 @@
 
 def main(
     hyperleda_file, foreground_file, gaia_file, des_stars_file, output_file,
-    nside,
+    nside, use_parquet,
 ):
     import pizza_cutter_masking as pcm
 
@@ -13,25 +13,31 @@ def main(
     geom = []
 
     if des_stars_file is not None:
-        print('loading des stars from:', des_stars_file)
+        print('Creating des star geom from:', des_stars_file)
         geom += pcm.des_stars.make_des_stars_geom(des_stars_file)
 
     if hyperleda_file is not None:
-        print('loading hyperleda from:', hyperleda_file)
+        print('Creating hyperleda geom from:', hyperleda_file)
         geom += pcm.hyperleda.make_hyperleda_geom(hyperleda_file)
 
     if gaia_file is not None:
-        print('loading gaia from:', gaia_file)
+        print('Creating gaia geom from:', gaia_file)
         geom += pcm.gaia.make_gaia_geom(gaia_file)
 
     if foreground_file is not None:
-        print('loading foreground from:', foreground_file)
+        print('Creating foreground geom from:', foreground_file)
         geom += pcm.foreground.make_foreground_geom(foreground_file)
 
+    print("Creating map from geom:")
     hmap = pcm.maps.geom_to_map(geom_list=geom, nside=nside)
 
+    if use_parquet:
+        format_ = "parquet"
+    else:
+        format_ = "fits"
+
     print('writing:', output_file)
-    hmap.write(output_file, clobber=True)
+    hmap.write(output_file, clobber=True, format=format_)
 
 
 def get_args():
@@ -45,6 +51,12 @@ def get_args():
     parser.add_argument('--output', help='output file')
 
     parser.add_argument('--nside', type=int, help='nside for output')
+    parser.add_argument(
+        '--use-parquet',
+        action='store_true',
+        help='Store output map in parquet format',
+    )
+
 
     return parser.parse_args()
 
@@ -58,4 +70,5 @@ if __name__ == '__main__':
         des_stars_file=args.des_stars,
         output_file=args.output,
         nside=args.nside,
+        use_parquet=args.use_parquet,
     )
