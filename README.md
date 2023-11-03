@@ -56,3 +56,38 @@ ax.scatter(ra, dec, c='black')
 ax.scatter(ra[ok], dec[ok], c='red')
 mplt.show()
 ```
+
+Running for High Resolution on a big memory machine
+===================================================
+dir=/nfs/slac/des/fs1/g/sims/esheldon/hsfiles
+pcm-make-mdet-mask --use-bool --nside 131072 --flist $(find $dir -name "*.hs" | sort) --output metadetect-v10_mdetcat_consolidated_healsparse-mask.parquet.hs --use-parquet
+
+fintermediate=hleda-foreground-gaia-des-stars-hsmap131k-v1.parquet
+pcm-make-mask \
+    --nside 131072 \
+    --hyperleda hyperleda_B16_18.fits.gz \
+    --foreground foreground-v2.fits \
+    --gaia gaia.fits \
+    --des-stars gold_2_0_r_lt_21_summary.fit \
+    --output $fintermediate \
+    --use-parquet
+
+fmdet=y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1.parquet
+pcm-make-combined \
+    --use-bool \
+    --nside 131072 \
+    --mask $fintermediate \
+    --footprint footprint-hsmap4096.fits \
+    --metadetect metadetect-v10_mdetcat_consolidated_healsparse-mask.parquet.hs \
+    --output $fmdet \
+    --use-parquet
+
+pcm-make-fracdet \
+    --nside 16384 \
+    --combined y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1.parquet \
+    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1-fracdet-16k.hsp
+
+pcm-make-fracdet \
+    --nside 4096 \
+    --combined y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1.parquet \
+    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1-fracdet-4k.hsp
