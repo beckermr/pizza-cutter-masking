@@ -2,7 +2,7 @@
 
 
 def main(
-    footprint_file, mask_file, metadetect_file, output_file, nside, use_bool,
+    footprint_file, mask_file, metadetect_file, output_file, nside, use_bool, use_parquet,
 ):
     import numpy as np
     import pizza_cutter_masking as pcm
@@ -22,19 +22,34 @@ def main(
 
     print('loading footprint:', footprint_file)
     footprint = hsp.HealSparseMap.read(footprint_file)
-    print('loading mask:', mask_file)
-    mask = hsp.HealSparseMap.read(mask_file)
+
+    mask_coverage = hsp.HealSparseCoverage.read(mask_file)
+
+    if mask_coverage.nside_sparse != nside:
+        raise ValueError(
+            'mask nside {mask_coverage.nside_sparse} does not equal '
+            'requested nside {nside}'
+        )
+    if mask_coverage.nside_coverage != NSIDE_COVERAGE:
+        raise ValueError(
+            'mask nside_coverage {mask_coverage.nside_coverage} does not equal '
+            'requested nside_coverage {NSIDE_COVERAGE}'
+        )
 
     if metadetect_file is not None:
-        print('loading mdet mask:', metadetect_file)
-        metadetect = hsp.HealSparseMap.read(metadetect_file)
-        if metadetect.nside_sparse != nside:
+        metadetect_coverage = hsp.HealSparseCoverage.read(metadetect_file)
+
+        if metadetect_coverage.nside_sparse != nside:
             raise ValueError(
-                'mdet nside {metadetect.nside_sparse} does not equal '
+                'mdet nside {metadetect_coverage.nside_sparse} does not equal '
                 'requested nside {nside}'
             )
-    else:
-        metadetect = None
+        if metadetect_coverage.nside_coverage != NSIDE_COVERAGE:
+            raise ValueError(
+                'mdet nside_coverage {metadetect_coverage.nside_coverage} does not equal '
+                'requested nside_coverage {NSIDE_COVERAGE}'
+            )
+            metadetect_sub = hsp.HealSparseMap.read(metadetect_file, pixels=covpix)
 
     hsp_map = hsp.HealSparseMap.make_empty(
         NSIDE_COVERAGE, nside, dtype=dtype,
@@ -44,22 +59,31 @@ def main(
     # within that range.
     for covpix_map in tqdm(footprint.get_covpix_maps()):
         covpix_highres = covpix_map.upgrade(nside)
+
+        pcm.lmc.mask_lmc(covpix_highres)
+
         valid_pix = covpix_highres.valid_pixels
 
-        mask_vals = mask.get_values_pix(valid_pix)
+        covpix, = np.where(covpix_map.coverage_mask)
+
+        mask_sub = hsp.HealSparseMap.read(mask_file, pixels=covpix)
+        mask_vals = mask_sub.get_values_pix(valid_pix)
         keep = (mask_vals == 0)
 
-        if metadetect is not None:
-            mdet_ok = metadetect.get_values_pix(valid_pix, valid_mask=True)
+        if metadetect_file is not None:
+            metadetect_sub = hsp.HealSparseMap.read(metadetect_file, pixels=covpix)
+            mdet_ok = metadetect_sub.get_values_pix(valid_pix, valid_mask=True)
             keep &= mdet_ok
 
         hsp_map[valid_pix[keep]] = val
 
-    print('masking the LMC')
-    pcm.lmc.mask_lmc(hsp_map)
+    if use_parquet:
+        format_ = "parquet"
+    else:
+        format_ = "fits"
 
     print('writing:', output_file)
-    hsp_map.write(output_file, clobber=True)
+    hsp_map.write(output_file, clobber=True, format=format_)
 
 
 def get_args():
@@ -84,6 +108,12 @@ def get_args():
         help='make a bool map rather than int16',
     )
 
+    parser.add_argument(
+        '--use-parquet',
+        action='store_true',
+        help='Store output map in parquet format',
+    )
+
     return parser.parse_args()
 
 
@@ -97,4 +127,5 @@ if __name__ == '__main__':
         output_file=args.output,
         nside=args.nside,
         use_bool=args.use_bool,
+        use_parquet=args.use_parquet,
     )
