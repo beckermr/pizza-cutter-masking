@@ -16,9 +16,11 @@ def main(
     if use_bool:
         dtype = bool
         val = True
+        bit_packed = True
     else:
         dtype = np.int16
         val = 1
+        bit_packed = False
 
     print('loading footprint:', footprint_file)
     footprint = hsp.HealSparseMap.read(footprint_file)
@@ -52,9 +54,11 @@ def main(
             metadetect_sub = hsp.HealSparseMap.read(metadetect_file, pixels=covpix)
 
     hsp_map = hsp.HealSparseMap.make_empty(
-        NSIDE_COVERAGE, nside, dtype=dtype,
+        NSIDE_COVERAGE, nside, dtype=dtype, bit_packed=bit_packed,
     )
 
+    import IPython
+    IPython.embed()
     # loop over the coverage pixel sub-maps, upgrade and get the valid pixels
     # within that range.
     for covpix_map in tqdm(footprint.get_covpix_maps()):
@@ -68,7 +72,10 @@ def main(
 
         mask_sub = hsp.HealSparseMap.read(mask_file, pixels=covpix)
         mask_vals = mask_sub.get_values_pix(valid_pix)
-        keep = (mask_vals == 0)
+        if mask_sub.dtype == np.bool_:
+            keep = (~mask_vals)
+        else:
+            keep = (mask_vals == 0)
 
         if metadetect_file is not None:
             metadetect_sub = hsp.HealSparseMap.read(metadetect_file, pixels=covpix)

@@ -3,7 +3,7 @@
 
 def main(
     hyperleda_file, foreground_file, gaia_file, des_stars_file, output_file,
-    nside, use_parquet,
+    nside, use_bool, use_parquet,
 ):
     import pizza_cutter_masking as pcm
 
@@ -29,7 +29,7 @@ def main(
         geom += pcm.foreground.make_foreground_geom(foreground_file)
 
     print("Creating map from geom:")
-    hmap = pcm.maps.geom_to_map(geom_list=geom, nside=nside)
+    hmap = pcm.maps.geom_to_map(geom_list=geom, nside=nside, use_bool=use_bool)
 
     if use_parquet:
         format_ = "parquet"
@@ -52,6 +52,11 @@ def get_args():
 
     parser.add_argument('--nside', type=int, help='nside for output')
     parser.add_argument(
+        '--use-bool',
+        action='store_true',
+        help='make a bool map rather than int16',
+    )
+    parser.add_argument(
         '--use-parquet',
         action='store_true',
         help='Store output map in parquet format',
@@ -70,5 +75,6 @@ if __name__ == '__main__':
         des_stars_file=args.des_stars,
         output_file=args.output,
         nside=args.nside,
+        use_bool=args.use_bool,
         use_parquet=args.use_parquet,
     )

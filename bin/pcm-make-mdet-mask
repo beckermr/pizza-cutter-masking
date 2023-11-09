@@ -12,12 +12,14 @@ def main(flist, output_file, nside, use_bool, use_parquet):
     if use_bool:
         dtype = bool
         val = True
+        bit_packed = True
     else:
         dtype = np.int16
         val = 1
+        bit_packed = False
 
     hsp_map = hsp.HealSparseMap.make_empty(
-        NSIDE_COVERAGE, nside, dtype=dtype,
+        NSIDE_COVERAGE, nside, dtype=dtype, bit_packed=bit_packed,
     )
 
     nfile = len(flist)
