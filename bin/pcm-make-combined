@@ -57,8 +57,6 @@ def main(
         NSIDE_COVERAGE, nside, dtype=dtype, bit_packed=bit_packed,
     )
 
-    import IPython
-    IPython.embed()
     # loop over the coverage pixel sub-maps, upgrade and get the valid pixels
     # within that range.
     for covpix_map in tqdm(footprint.get_covpix_maps()):
