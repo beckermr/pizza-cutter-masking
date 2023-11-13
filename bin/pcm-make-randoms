@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+def main(args):
+    import numpy as np
+    import healsparse as hsp
+    import fitsio
+
+    print(f'creating {args.nfiles} files with {args.nrand:_} points each')
+    print('reading:', args.input)
+    hmap = hsp.HealSparseMap.read(args.input)
+
+    rng = np.random.RandomState(args.seed)
+
+    output = np.zeros(args.nrand, dtype=[('ra', 'f8'), ('dec', 'f8')])
+
+    for i in range(args.nfiles):
+        if args.nfiles == 1:
+            seed = args.seed
+            this_rng = rng
+        else:
+            seed = rng.randint(0, 2**16)
+            this_rng = np.random.RandomState(seed)
+
+        meta = make_meta(
+            hsp_map_file=args.input,
+            seed=seed,
+        )
+
+        outfile = args.front + '-%05d.fits' % seed
+        print(f'{i+1}/{args.nfiles} {outfile}')
+
+        output['ra'], output['dec'] = hsp.make_uniform_randoms(
+            sparse_map=hmap, n_random=args.nrand, rng=this_rng,
+        )
+
+        with fitsio.FITS(outfile, 'rw', clobber=True) as fits:
+            fits.write(output, extname='randoms')
+            fits.write(meta, extname='meta')
+
+
+def make_meta(hsp_map_file, seed):
+    import numpy as np
+    dtype = [
+        ('hsp_map', 'U%d' % len(hsp_map_file)),
+        ('seed', 'i8'),
+    ]
+    meta = np.zeros(1, dtype=dtype)
+    meta['hsp_map'] = hsp_map_file
+    meta['seed'] = seed
+    return meta
+
+
+def get_args():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input', help='input healsparse file', required=True)
+    parser.add_argument('--seed', type=int, help='seed for rng', required=True)
+    parser.add_argument(
+        '--nrand', type=int, help='number of randoms',
+        required=True,
+    )
+    parser.add_argument(
+        '--front', help='front for output files', required=True
+    )
+    parser.add_argument(
+        '--nfiles',
+        type=int,
+        help='number of files to write with nrand, default 1',
+        default=1,
+    )
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = get_args()
+    main(args)
