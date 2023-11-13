@@ -33,10 +33,10 @@ def main(args):
         val_range = args.val_range
         kw['vmin'] = val_range[0]
         kw['vmax'] = val_range[1]
-    else:
-        valid_pixels = hmap.valid_pixels
-        kw['vmin'] = hmap[valid_pixels].min()
-        kw['vmax'] = hmap[valid_pixels].max()
+    # else:
+    #     valid_pixels = hmap.valid_pixels
+    #     kw['vmin'] = hmap[valid_pixels].min()
+    #     kw['vmax'] = hmap[valid_pixels].max()
 
     print('plotting')
     fig, ax = mplt.subplots(figsize=(10, 6))
@@ -44,8 +44,8 @@ def main(args):
     m = skyproj.McBrydeSkyproj(ax=ax, autorescale=args.autorescale)
     _ = m.draw_hspmap(hmap, cmap=cmap, **kw)
 
-    if args.cat is not None:
-        oplot_cat(m, args)
+    if args.cat is not None or args.nrand is not None:
+        oplot_cat(hmap, m, args)
 
     if args.output is not None:
         print('writing:', args.output)
@@ -59,51 +59,98 @@ def main(args):
         mplt.show()
 
 
-def oplot_cat(ax, args):
+def oplot_cat(hmap, ax, args):
     import numpy as np
 
-    print('loading:', args.cat)
-    if '.h5' in args.cat:
-        ra, dec = read_from_h5(args.cat)
+    if args.nrand is not None:
+        ra, dec = genrand(hmap, args)
     else:
-        ra, dec = read_from_fits(args.cat)
 
-    if args.lon_range is not None:
-        w, = np.where(
-            (ra > args.lon_range[0])
-            & (ra < args.lon_range[1])
-            & (dec > args.lat_range[0])
-            & (dec < args.lat_range[1])
-        )
-        print(f'kept: {w.size}/{ra.size}')
-        ra = ra[w]
-        dec = dec[w]
+        print('loading:', args.cat)
+        if '.h5' in args.cat:
+            ra, dec = read_from_h5(args.cat)
+        else:
+            ra, dec = read_from_fits(args.cat, num=args.catnum)
+
+        if args.lon_range is not None:
+            w, = np.where(
+                (ra > args.lon_range[0])
+                & (ra < args.lon_range[1])
+                & (dec > args.lat_range[0])
+                & (dec < args.lat_range[1])
+            )
+            print(f'kept: {w.size}/{ra.size}')
+            ra = ra[w]
+            dec = dec[w]
 
     ax.scatter(ra, dec, c='black', marker='o', s=4, zorder=10)
 
 
+def genrand(hmap, args):
+    import numpy as np
+    if args.lon_range is None:
+        ra, dec = hmap.make_uniform_randoms(hmap, args.nrand)
+    else:
+        import esutil as eu
+        ngood = 0
+        nleft = args.nrand
+
+        ra = np.zeros(args.nrand)
+        dec = np.zeros(args.nrand)
+
+        while nleft > 0:
+            tra, tdec = eu.coords.randsphere(
+                num=nleft,
+                ra_range=args.lon_range,
+                dec_range=args.lat_range,
+            )
+
+            ok = hmap.get_values_pos(tra, tdec)
+
+            w, = np.where(ok)
+
+            ra[ngood:ngood+w.size] = tra[w]
+            dec[ngood:ngood+w.size] = tdec[w]
+
+            ngood += w.size
+            nleft = args.nrand - ngood
+
+    return ra, dec
+
+
 def read_from_h5(fname):
     import h5py
-    hfile = h5py.File(args.cat)
+    hfile = h5py.file(args.cat)
 
     ra = hfile['/mdet/noshear']['ra'][:]
     dec = hfile['/mdet/noshear']['dec'][:]
     return ra, dec
 
 
-def read_from_fits(fname):
+def read_from_fits(fname, num=None):
     import fitsio
     import numpy as np
 
-    with fitsio.FITS(fname) as fits:
-        data = fits[1].read(columns=['mask_flags', 'mdet_step', 'mfrac'])
-        w, = np.where(
-            (data['mask_flags'] == 0)
-            & (data['mdet_step'] == 'noshear')
-            & (data['mfrac'] < 0.1)
-        )
+    with fitsio.fits(fname) as fits:
+        if num is not None:
+            rows = np.arange(num)
+        else:
+            rows = np.arange(fits[1].get_nrows())
 
-        data = fits[1].read(columns=['ra', 'dec'], rows=w)
+        cols = fits[1].get_colnames()
+        if 'mask_flags' in cols:
+            data = fits[1].read(
+                rows=rows,
+                columns=['mask_flags', 'mdet_step', 'mfrac'],
+            )
+            w, = np.where(
+                (data['mask_flags'] == 0)
+                & (data['mdet_step'] == 'noshear')
+                & (data['mfrac'] < 0.1)
+            )
+            rows = rows[w]
+
+        data = fits[1].read(columns=['ra', 'dec'], rows=rows)
 
     return data['ra'], data['dec']
 
@@ -117,6 +164,12 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('fname', help='input healsparse file')
     parser.add_argument('--cat', help='h5 file with positions to overplot')
+    parser.add_argument(
+        '--catnum', type=int, help='number of objects to read from catalog'
+    )
+    parser.add_argument(
+        '--nrand', type=int, help='generate randoms from map'
+    )
     parser.add_argument(
         '--lon-range', type=float, nargs=2, help='e.g. 50 60'
     )
