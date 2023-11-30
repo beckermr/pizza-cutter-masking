@@ -1,8 +1,69 @@
 # pizza-cutter-masking
 mask making codes for pizza-cutter
 
-Examples making masks
----------------------
+Running for High Resolution on a moderate memory machine
+========================================================
+
+Using bit-packed boolean masks from healsparse 1.8 (along with a memory leak fixed in hpgeom 1.1.1) means that even a moderate memory machine (18 Gb peak usage) can run these at high resolution.
+
+These were the commands used:
+
+```bash
+dir=/nfs/slac/des/fs1/g/sims/esheldon/hsfiles
+mdmask=metadetect-v10_mdetcat_consolidated_healsparse-mask.hsp
+pcm-make-mdet-mask \
+    --use-bool \
+    --nside 131072 \
+    --flist $(find $dir -name "*.hs" | sort) \
+    --output $mdmask
+
+fintermediate=hleda-foreground-gaia-des-stars-hsmap131k-v1.hsp
+pcm-make-mask \
+    --nside 131072 \
+    --hyperleda hyperleda_B16_18.fits.gz \
+    --foreground foreground-v2.fits \
+    --gaia gaia.fits \
+    --des-stars gold_2_0_r_lt_21_summary.fit \
+    --output $fintermediate \
+    --use-bool
+
+fmdet=y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1.hsp
+pcm-make-combined \
+    --use-bool \
+    --nside 131072 \
+    --mask $fintermediate \
+    --footprint footprint-hsmap4096.fits \
+    --metadetect $mdmask \
+    --output $fmdet
+
+pcm-make-fracdet \
+    --nside 16384 \
+    --combined $fmdet \
+    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1-fracdet-16k.hsp
+
+pcm-make-fracdet \
+    --nside 4096 \
+    --combined $fmdet \
+    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1-fracdet-4k.hsp
+```
+
+Examples applying masks
+```python
+import healsparse as hsp
+
+hmap = hsp.HealSparseMap.read('y6-combined-hleda-gaiafull-des-stars-hsmap16384-mdet-v2.fits')
+
+# the map has value 1 for "good" pixels.  But it is simpler
+# use the valid_mask check for positions
+ok = metadetect.get_values_pos(ra, dec, lonlat=True, valid_mask=True)
+fig, ax = mplt.subplots()
+ax.scatter(ra, dec, c='black')
+ax.scatter(ra[ok], dec[ok], c='red')
+mplt.show()
+```
+
+Other Examples making masks
+----------------------------
 ```bash
 # make the foregound/gaia/des stars/hyperleda mask
 # this mask has value zero for "good" pixels
@@ -41,62 +102,3 @@ pcm-make-combined \
 # visualize the map
 pcm-plot-mask y6-combined-hleda-gaiafull-des-stars-hsmap16384-nomdet-v2.fits
 ```
-
-Examples applying masks
-```python
-import healsparse as hsp
-
-hmap = hsp.HealSparseMap.read('y6-combined-hleda-gaiafull-des-stars-hsmap16384-mdet-v2.fits')
-
-# the map has value 1 for "good" pixels.  But it is simpler
-# use the valid_mask check for positions
-ok = metadetect.get_values_pos(ra, dec, lonlat=True, valid_mask=True)
-fig, ax = mplt.subplots()
-ax.scatter(ra, dec, c='black')
-ax.scatter(ra[ok], dec[ok], c='red')
-mplt.show()
-```
-
-Running for High Resolution on a moderate memory machine
-========================================================
-
-Using bit-packed boolean masks from healsparse 1.8 (along with a memory leak fixed in hpgeom 1.1.1) means that even a moderate memory machine (18 Gb peak usage) can run these at high resolution.
-
-These were the commands used:
-
-dir=/nfs/slac/des/fs1/g/sims/esheldon/hsfiles
-mdmask=metadetect-v10_mdetcat_consolidated_healsparse-mask.hsp
-pcm-make-mdet-mask \
-    --use-bool \
-    --nside 131072 \
-    --flist $(find $dir -name "*.hs" | sort) \
-    --output $mdmask
-
-fintermediate=hleda-foreground-gaia-des-stars-hsmap131k-v1.hsp
-pcm-make-mask \
-    --nside 131072 \
-    --hyperleda hyperleda_B16_18.fits.gz \
-    --foreground foreground-v2.fits \
-    --gaia gaia.fits \
-    --des-stars gold_2_0_r_lt_21_summary.fit \
-    --output $fintermediate \
-    --use-bool
-
-fmdet=y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1.hsp
-pcm-make-combined \
-    --use-bool \
-    --nside 131072 \
-    --mask $fintermediate \
-    --footprint footprint-hsmap4096.fits \
-    --metadetect $mdmask \
-    --output $fmdet
-
-pcm-make-fracdet \
-    --nside 16384 \
-    --combined $fmdet \
-    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1-fracdet-16k.hsp
-
-pcm-make-fracdet \
-    --nside 4096 \
-    --combined $fmdet \
-    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1-fracdet-4k.hsp
