@@ -1,10 +1,13 @@
 # pizza-cutter-masking
 mask making codes for pizza-cutter
 
-Running for High Resolution on a moderate memory machine
-========================================================
+Making High Resolution mask
+============================
 
-Using bit-packed boolean masks from healsparse 1.8 (along with a memory leak fixed in hpgeom 1.1.1) means that even a moderate memory machine (18 Gb peak usage) can run these at high resolution.
+This requires a moderately high memory machine.  Using bit-packed boolean masks
+from healsparse 1.8 (along with a memory leak fixed in hpgeom 1.1.1) means that
+even a moderate memory machine (18 Gb peak usage) can run these at high
+resolution.
 
 These were the commands used:
 

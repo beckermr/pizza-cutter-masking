@@ -30,12 +30,10 @@ def geom_to_map(geom_list, nside, use_bool=False):
 
     if use_bool:
         dtype = bool
-        val = True
         bit_packed = True
         sentinel = False
     else:
         dtype = np.int16
-        val = 1
         bit_packed = False
         sentinel = 0
 
