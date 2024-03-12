@@ -30,24 +30,23 @@ pcm-make-mask \
     --output $fintermediate \
     --use-bool
 
-fmdet=y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1.hsp
+fmdet=y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v2.hsp
 pcm-make-combined \
     --use-bool \
     --nside 131072 \
     --mask $fintermediate \
-    --footprint footprint-hsmap4096.fits \
     --metadetect $mdmask \
     --output $fmdet
 
 pcm-make-fracdet \
     --nside 16384 \
     --combined $fmdet \
-    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1-fracdet-16k.hsp
+    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v2-fracdet-16k.hsp
 
 pcm-make-fracdet \
     --nside 4096 \
     --combined $fmdet \
-    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v1-fracdet-4k.hsp
+    --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v2-fracdet-4k.hsp
 ```
 
 Examples applying masks
