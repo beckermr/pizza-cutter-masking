@@ -1,16 +1,18 @@
 
 
 def mask_lmc(hmap):
-    import numpy as np
+    import hpgeom as hpg
     from pizza_cutter_masking.constants import (
         LMC_RA_RANGE, LMC_DEC_RANGE,
     )
-    vpix, ra, dec = hmap.valid_pixels_pos(return_pixels=True)
-    bad, = np.where(
-        (ra > LMC_RA_RANGE[0])
-        & (ra < LMC_RA_RANGE[1])
-        & (dec > LMC_DEC_RANGE[0])
-        & (dec < LMC_DEC_RANGE[1])
+
+    lmc_ranges = hpg.query_box(
+        hmap.nside_sparse,
+        LMC_RA_RANGE[0],
+        LMC_RA_RANGE[1],
+        LMC_DEC_RANGE[0],
+        LMC_DEC_RANGE[1],
+        return_pixel_ranges=True,
     )
 
-    hmap[vpix[bad]] = hmap._sentinel
+    hmap[lmc_ranges] = None
