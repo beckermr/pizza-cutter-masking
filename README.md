@@ -1,8 +1,11 @@
 # pizza-cutter-masking
 mask making codes for pizza-cutter
 
-Making High Resolution mask
-============================
+## Finding Mask Data
+
+The majority of the data for the masks here is located at [BNL](https://www.cosmo.bnl.gov/www/esheldon/data/y6-healsparse/).
+
+## Making High Resolution mask
 
 This requires a moderately high memory machine.  Using bit-packed boolean masks
 from healsparse 1.8 (along with a memory leak fixed in hpgeom 1.1.1) means that
@@ -55,7 +58,8 @@ pcm-add-extra-masks \
     --output-masked-pixels y6-extra-masks-pixels-v2-16k.hsp
 ```
 
-Examples applying masks
+### Examples applying masks
+
 ```python
 import healsparse as hsp
 
@@ -70,8 +74,8 @@ ax.scatter(ra[ok], dec[ok], c='red')
 mplt.show()
 ```
 
-Other Examples making masks
-----------------------------
+### Other Examples making masks
+
 ```bash
 # make the foregound/gaia/des stars/hyperleda mask
 # this mask has value zero for "good" pixels
@@ -110,3 +114,9 @@ pcm-make-combined \
 # visualize the map
 pcm-plot-mask y6-combined-hleda-gaiafull-des-stars-hsmap16384-nomdet-v2.fits
 ```
+
+## Notes on Extra Masks
+
+The extra masks applied at the end of the mask making process are defined in a
+JSON file `scripts/hleda_extra_mask_config_v1.json`.  The code/notebook that made
+this file is located in [beckermr/des-y6-analysis/2024_04_22_big_ellip_gals](https://github.com/beckermr/des-y6-analysis/tree/main/2024_04_22_big_ellip_gals).

@@ -24,7 +24,7 @@ def main(
 
     new_hsm = hsp.HealSparseMap.read(input_mask_file)
 
-    for i, (obj, data) in mask_config.items():
+    for obj, data in mask_config.items():
         ra = data["ra"]
         dec = data["dec"]
         semi_major = data["semi_major"]
