@@ -1,8 +1,11 @@
 # pizza-cutter-masking
 mask making codes for pizza-cutter
 
-Making High Resolution mask
-============================
+## Finding Mask Data
+
+The majority of the data for the masks here is located at [BNL](https://www.cosmo.bnl.gov/www/esheldon/data/y6-healsparse/).
+
+## Making High Resolution mask
 
 This requires a moderately high memory machine.  Using bit-packed boolean masks
 from healsparse 1.8 (along with a memory leak fixed in hpgeom 1.1.1) means that
@@ -47,9 +50,16 @@ pcm-make-fracdet \
     --nside 4096 \
     --combined $fmdet \
     --output y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v2-fracdet-4k.hsp
+
+pcm-add-extra-masks \
+    --extra-mask-config-json scripts/hleda_extra_mask_config_v1.json \
+    --input-mask y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-v2.hsp \
+    --output-mask y6-combined-hleda-gaiafull-des-stars-hsmap131k-mdet-extra-masks-v2.hsp \
+    --output-masked-pixels y6-extra-masks-pixels-v2-16k.hsp
 ```
 
-Examples applying masks
+### Examples applying masks
+
 ```python
 import healsparse as hsp
 
@@ -64,8 +74,8 @@ ax.scatter(ra[ok], dec[ok], c='red')
 mplt.show()
 ```
 
-Other Examples making masks
-----------------------------
+### Other Examples making masks
+
 ```bash
 # make the foregound/gaia/des stars/hyperleda mask
 # this mask has value zero for "good" pixels
@@ -104,3 +114,20 @@ pcm-make-combined \
 # visualize the map
 pcm-plot-mask y6-combined-hleda-gaiafull-des-stars-hsmap16384-nomdet-v2.fits
 ```
+
+## Notes on Extra Masks
+
+The extra masks applied at the end of the mask making process are defined in a
+JSON file `scripts/hleda_extra_mask_config_v1.json`.  The code/notebook that made
+this file is located in [beckermr/des-y6-analysis/2024_04_22_big_ellip_gals](https://github.com/beckermr/des-y6-analysis/tree/main/2024_04_22_big_ellip_gals).
+
+## Notes on Gold Summary Files
+
+Eli downloaded Y6A1 gold v2.0 and then applied the following code to produce the r-band mag:
+
+```python
+ok, = np.where(bdf['flux_bdf_r'] > 0.0)
+r_mag = 30.0 - 2.5*np.log10(bdf['flux_bdf_r'][ok])
+```
+
+See issues [#7](https://github.com/beckermr/pizza-cutter-masking/issues/7) for details.

@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+
+def main(
+    *,
+    mask_config_file,
+    input_mask_file,
+    output_mask_file,
+    output_masked_pixels_file,
+):
+    import json
+    import healsparse as hsp
+
+    with open(mask_config_file, 'r') as config_file:
+        mask_config = json.load(config_file)
+
+    masked_pixels = hsp.HealSparseMap.make_empty(
+        32,
+        2**14,
+        bool,
+        sentinel=False,
+        bit_packed=True,
+    )
+
+    new_hsm = hsp.HealSparseMap.read(input_mask_file)
+
+    for obj, data in mask_config.items():
+        ra = data["ra"]
+        dec = data["dec"]
+        semi_major = data["semi_major"]
+        semi_minor = data["semi_minor"]
+        pa = data["pa"]
+
+        nel = hsp.geom.Ellipse(
+            ra=ra,
+            dec=dec,
+            semi_major=semi_major,
+            semi_minor=semi_minor,
+            alpha=pa,
+            value=1,
+        )
+
+        hnel16 = nel.get_map(nside_coverage=32, nside_sparse=2**14, dtype=int)
+        masked_pixels.update_values_pix(hnel16.valid_pixels, True)
+
+        hnel16_131 = hnel16.upgrade(2**17)
+        new_hsm.update_values_pix(hnel16_131.valid_pixels, 0)
+
+    print('writing:', output_mask_file)
+    new_hsm.write(output_mask_file, clobber=True)
+    print('writing:', output_masked_pixels_file)
+    masked_pixels.write(output_masked_pixels_file, clobber=True)
+
+
+def get_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--extra-mask-config-json',
+        required=True,
+        help="JSON file with extra mask configs. Default file is 'scripts/hleda_extra_mask_config_v1.json'.",
+    )
+    parser.add_argument(
+        '--input-mask',
+        required=True,
+        help='input mask file',
+    )
+    parser.add_argument(
+        '--output-mask',
+        required=True,
+        help='output mask file',
+    )
+    parser.add_argument(
+        '--output-masked-pixels',
+        required=True,
+        help='output healsparse map with pixels that were masked',
+    )
+
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = get_args()
+
+    main(
+        mask_config_file=args.extra_mask_config_json,
+        input_mask_file=args.input_mask,
+        output_mask_file=args.output_mask,
+        output_masked_pixels_file=args.output_masked_pixels,
+    )
