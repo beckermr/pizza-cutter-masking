@@ -60,7 +60,7 @@ def get_args():
     parser.add_argument(
         '--extra-mask-config-json',
         required=True,
-        help="JSON file with extra mask configs.",
+        help="JSON file with extra mask configs. Default file is 'scripts/hleda_extra_mask_config_v1.json'.",
     )
     parser.add_argument(
         '--input-mask',
