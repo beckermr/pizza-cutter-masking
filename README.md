@@ -120,3 +120,12 @@ pcm-plot-mask y6-combined-hleda-gaiafull-des-stars-hsmap16384-nomdet-v2.fits
 The extra masks applied at the end of the mask making process are defined in a
 JSON file `scripts/hleda_extra_mask_config_v1.json`.  The code/notebook that made
 this file is located in [beckermr/des-y6-analysis/2024_04_22_big_ellip_gals](https://github.com/beckermr/des-y6-analysis/tree/main/2024_04_22_big_ellip_gals).
+
+## Notes on Gold Summary Files
+
+Eli downloaded Y6A1 gold v2.0 and then applied the following cut:
+
+```python
+ok, = np.where(bdf['flux_bdf_r'] > 0.0)
+r_mag = 30.0 - 2.5*np.log10(bdf['flux_bdf_r'][ok])
+```
