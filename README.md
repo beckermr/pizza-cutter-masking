@@ -123,9 +123,11 @@ this file is located in [beckermr/des-y6-analysis/2024_04_22_big_ellip_gals](htt
 
 ## Notes on Gold Summary Files
 
-Eli downloaded Y6A1 gold v2.0 and then applied the following cut:
+Eli downloaded Y6A1 gold v2.0 and then applied the following code to produce the r-band mag:
 
 ```python
 ok, = np.where(bdf['flux_bdf_r'] > 0.0)
 r_mag = 30.0 - 2.5*np.log10(bdf['flux_bdf_r'][ok])
 ```
+
+See issues [#7](https://github.com/beckermr/pizza-cutter-masking/issues/7) for details.
