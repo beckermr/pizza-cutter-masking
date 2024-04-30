@@ -2,7 +2,8 @@
 
 
 def main(
-    footprint_file, mask_file, metadetect_file, output_file, nside, use_bool, use_parquet,
+    footprint_file, mask_file, metadetect_file, output_file, nside, use_bool,
+    use_parquet,
 ):
     import numpy as np
     import pizza_cutter_masking as pcm
@@ -11,7 +12,9 @@ def main(
     from tqdm import tqdm
 
     if footprint_file is None and metadetect_file is None:
-        raise RuntimeError("Must supply at least one of footprint or metadetect")
+        raise RuntimeError(
+            "Must supply at least one of footprint or metadetect"
+        )
 
     if nside is None:
         nside = NSIDE
@@ -40,8 +43,8 @@ def main(
         )
     if mask_coverage.nside_coverage != NSIDE_COVERAGE:
         raise ValueError(
-            'mask nside_coverage {mask_coverage.nside_coverage} does not equal '
-            'requested nside_coverage {NSIDE_COVERAGE}'
+            'mask nside_coverage {mask_coverage.nside_coverage} '
+            'does not equal requested nside_coverage {NSIDE_COVERAGE}'
         )
 
     if metadetect_file is not None:
@@ -54,8 +57,8 @@ def main(
             )
         if metadetect_coverage.nside_coverage != NSIDE_COVERAGE:
             raise ValueError(
-                'mdet nside_coverage {metadetect_coverage.nside_coverage} does not equal '
-                'requested nside_coverage {NSIDE_COVERAGE}'
+                'mdet nside_coverage {metadetect_coverage.nside_coverage} '
+                'does not equal requested nside_coverage {NSIDE_COVERAGE}'
             )
 
     hsp_map = hsp.HealSparseMap.make_empty(
@@ -63,11 +66,13 @@ def main(
     )
 
     mask_coverage = hsp.HealSparseCoverage.read(mask_file)
+    if metadetect_file is not None:
+        mdet_coverage = hsp.HealSparseCoverage.read(metadetect_file)
 
     # If we have a footprint file, start with that.
     if footprint is not None:
-        # loop over the coverage pixel sub-maps, upgrade and get the valid pixels
-        # within that range.
+        # loop over the coverage pixel sub-maps, upgrade and get the valid
+        # pixels within that range.
         for covpix_map in tqdm(footprint.get_covpix_maps()):
             covpix_highres = covpix_map.upgrade(nside)
 
@@ -85,9 +90,14 @@ def main(
                 else:
                     keep = (mask_vals == 0)
 
-                if metadetect_file is not None:
-                    metadetect_sub = hsp.HealSparseMap.read(metadetect_file, pixels=covpix)
-                    mdet_ok = metadetect_sub.get_values_pix(valid_pix, valid_mask=True)
+                if (metadetect_file is not None
+                        and mdet_coverage.coverage_mask[covpix[0]]):
+                    metadetect_sub = hsp.HealSparseMap.read(
+                        metadetect_file, pixels=covpix,
+                    )
+                    mdet_ok = metadetect_sub.get_values_pix(
+                        valid_pix, valid_mask=True,
+                    )
                     keep &= mdet_ok
 
                 hsp_map[valid_pix[keep]] = val
@@ -98,7 +108,9 @@ def main(
         covpixels, = np.where(metadetect_coverage.coverage_mask)
         print(f"Combining {covpixels.size} coverage pixels...")
         for covpix in tqdm(covpixels):
-            metadetect_sub = hsp.HealSparseMap.read(metadetect_file, pixels=covpix)
+            metadetect_sub = hsp.HealSparseMap.read(
+                metadetect_file, pixels=covpix,
+            )
             valid_pix = metadetect_sub.valid_pixels
 
             mask_sub = hsp.HealSparseMap.read(mask_file, pixels=covpix)
