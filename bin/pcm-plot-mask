@@ -88,8 +88,10 @@ def oplot_cat(hmap, ax, args):
 
 def genrand(hmap, args):
     import numpy as np
+    import healsparse
+
     if args.lon_range is None:
-        ra, dec = hmap.make_uniform_randoms(hmap, args.nrand)
+        ra, dec = healsparse.make_uniform_randoms(hmap, args.nrand)
     else:
         import esutil as eu
         ngood = 0
